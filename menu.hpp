@@ -56,12 +56,10 @@ namespace terminal
             put_output(text.header);
             for (std::size_t i = 0; i < options.size(); i++)
             {
-                put_output(pointer == i ? text.before_selected : text.before);
-                put_output(options[i].name);
-                put_output(pointer == i ? text.after_selected : text.after);
+                put_output(pointer == i ? text.before_selected : text.before, options[i].name, pointer == i ? text.after_selected : text.after);
             }
             put_output(text.footer);
-            char input = get_console();
+            char input = to_lowercase(get_console());
             if (input == keyboard.previous && pointer)
             {
                 pointer--;
@@ -83,11 +81,13 @@ namespace terminal
 #ifdef TERMINAL_WINDOWS
                 put_output(input);
 #endif
-                std::vector<command_t> commands = default_commands;
+                std::vector commands = default_commands;
                 commands.insert(commands.end(), {{"menu:previous", std::bind(put_console, keyboard.previous)},
                                                  {"menu:next", std::bind(put_console, keyboard.next)},
                                                  {"menu:enter", std::bind(put_console, keyboard.enter)},
-                                                 {"menu:exit", std::bind(put_console, keyboard.exit)}});
+                                                 {"menu:exit", std::bind(put_console, keyboard.exit)},
+                                                 {"menu:size", std::bind(put_input<std::endl, std::size_t &>, static_cast<std::size_t>(options.size()))},
+                                                 {"menu:pointer", std::bind(put_input<std::endl, std::size_t &>, pointer)}});
                 command(commands);
             }
         }

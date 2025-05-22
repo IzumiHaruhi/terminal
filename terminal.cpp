@@ -1,4 +1,4 @@
-#define TERMINAL_PORTABLE
+// #define TERMINAL_PORTABLE
 
 #include "menu.hpp"
 
