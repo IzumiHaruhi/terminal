@@ -45,6 +45,16 @@ namespace terminal
 
     char to_lowercase(char input) { return std::tolower(static_cast<unsigned char>(input)); }
 
+    int to_number(const std::string &input)
+    try
+    {
+        return std::stoi(input);
+    }
+    catch (...)
+    {
+        return 0;
+    }
+
     std::map<std::string, std::string> command_variables;
 
     void set_variable()
@@ -55,42 +65,70 @@ namespace terminal
 
     void get_variable() { put_input(std::quoted(command_variables[get_input()])); }
 
-    void execute_variable() { put_input<std::endl>(command_variables[get_input()]); }
+    void invoke_variable() { put_input<std::endl>(command_variables[get_input()]); }
 
     void delete_variable() { command_variables.erase(get_input()); }
 
     void get_all()
     {
-        std::ostringstream text_stream;
+        std::ostringstream result;
         for (const auto &[key, value] : command_variables)
         {
-            text_stream << std::quoted(key) << " " << std::quoted(value) << std::endl;
+            result << std::quoted(key) << " " << std::quoted(value) << std::endl;
         }
-        put_input(std::quoted(text_stream.str().substr(0, text_stream.str().size() - 1)));
+        put_input(std::quoted(result.str().substr(0, result.str().size() - 1)));
     }
 
     void get_time()
     {
-        std::time_t current_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        put_input(std::put_time(std::localtime(&current_time), "\"%F %T\""));
+        std::time_t value = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        put_input(std::put_time(std::localtime(&value), "\"%F %T\""));
     }
 
     void get_quote()
     {
-        std::ostringstream text_stream;
-        text_stream << std::quoted(get_input());
-        put_input(std::quoted(text_stream.str()));
+        std::ostringstream result;
+        result << std::quoted(get_input());
+        put_input(std::quoted(result.str()));
     }
 
-    void get_concatenate() {}
-    // concat alpha beta
-    // alphabeta
+    void get_length() { put_input(std::quoted(std::to_string(get_input().size()))); }
 
-    void get_calculate() {}
-    // calc 1 + 2
-    // 3
+    void get_concatenate()
+    {
+        std::string input = get_input();
+        put_input(std::quoted(input + get_input()));
+    }
 
-    void input_text() { put_input<std::endl>(get_input()); }
+    void get_repeat()
+    {
+        std::string input = get_input(), result;
+        for (int i = to_number(get_input()); i--;)
+        {
+            result += input;
+        }
+        put_input(std::quoted(result));
+    }
+
+    void get_condition() { put_input(std::quoted(std::vector{get_input(), get_input()}[!to_number(get_input())])); }
+
+    void get_substring()
+    {
+        std::string input = get_input();
+        std::size_t value = to_number(get_input());
+        put_input(std::quoted(input.substr(std::min(value, input.size()), to_number(get_input()))));
+    }
+
+    void get_calculate()
+    {
+        int value = to_number(get_input());
+        std::string input = get_input();
+#define _(command_operator, ...) input == #command_operator ? put_input(std::quoted(std::to_string(value __VA_ARGS__ command_operator to_number(get_input()))))
+        _(+) : _(-) : _(*) : _(/) : _(%) : _(&) : _(|) : _(^) : _(<<) : _(>>) : _(&&) : _(||) : _(==) : _(!=) : _(<) : _(>) : _(<=) : _(>=) : _(~, =) : _(!, =) : put_input(std::quoted(get_input()));
+#undef _
+    }
+
+    void execute_text() { put_input<std::endl>(get_input()); }
 
     void output_text() { put_output<std::endl>(get_input()); }
 
@@ -109,7 +147,7 @@ namespace terminal
 
     void exit_program() { std::exit(0); }
 
-    void unknown_command() { put_output<std::endl>(__func__); }
+    void unknown_command() { put_output<std::endl>(std::quoted(__func__)); }
 
     struct command_t
     {
@@ -119,15 +157,19 @@ namespace terminal
 
     std::vector<command_t> default_commands{{"set", set_variable},
                                             {"get", get_variable},
-                                            {"exec", execute_variable},
-                                            {"del", delete_variable},
+                                            {"invoke", invoke_variable},
+                                            {"delete", delete_variable},
                                             {"all", get_all},
                                             {"time", get_time},
                                             {"quote", get_quote},
-                                            {"concat", get_concatenate},
-                                            {"calc", get_calculate},
-                                            {"in", input_text},
-                                            {"out", output_text},
+                                            {"length", get_length},
+                                            {"concatenate", get_concatenate},
+                                            {"repeat", get_repeat},
+                                            {"condition", get_condition},
+                                            {"substring", get_substring},
+                                            {"calculate", get_calculate},
+                                            {"execute", execute_text},
+                                            {"output", output_text},
                                             {"log", log_text},
                                             {"call", call_system},
                                             {"clear", clear_screen},

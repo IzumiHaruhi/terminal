@@ -30,21 +30,12 @@ namespace terminal
 
     struct menu_text_t
     {
-        std::string header = "options:\n";
-        std::string footer = "";
-        std::string before = " |";
-        std::string after = "\n";
-        std::string before_selected = ">|";
-        std::string after_selected = "\n";
+        std::string header = "options:\n", footer = "", before = " |", after = "\n", before_selected = ">|", after_selected = "\n";
     };
 
     struct menu_keyboard_t
     {
-        char previous = 'w';
-        char next = 's';
-        char enter = ' ';
-        char exit = 'e';
-        char command = '/';
+        char previous = 'w', next = 's', enter = ' ', exit = 'e', command = '/';
     };
 
     void menu(const menu_text_t &text = {}, const std::vector<command_t> &options = {}, const menu_keyboard_t &keyboard = {})
